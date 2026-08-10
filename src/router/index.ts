@@ -32,11 +32,6 @@ export const constantRoutes: RouteRecordRaw[] = [
     meta: { hidden: true, title: '错误' },
   },
   {
-    path: '/404',
-    redirect: '/error?status=404',
-    meta: { hidden: true },
-  },
-  {
     path: '/:pathMatch(.*)*',
     name: 'CatchAll',
     component: () => import('@/views/result/error.vue'),
