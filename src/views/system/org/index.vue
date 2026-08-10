@@ -125,7 +125,7 @@ async function handleRefresh() {
     <div class="flex-1 rounded bg-white shadow-sm p-4 min-w-0">
       <!-- 操作栏 -->
       <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center">
           <el-input
             v-model="searchKey"
             class="w-60!"
@@ -133,7 +133,7 @@ async function handleRefresh() {
             clearable
             @keyup.enter="handleSearch"
           />
-          <el-button type="primary" @click="handleSearch">
+          <el-button class="ml-3" type="primary" @click="handleSearch">
             <template #icon><IconEpSearch /></template>
             查询
           </el-button>
