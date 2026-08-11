@@ -60,7 +60,7 @@ function resetForm() {
 
 async function loadParents() {
   try {
-    const data = await fetchParentMenuAll()
+    const { data } = await fetchParentMenuAll()
     let list: { id: string; title: string }[] = data
     if (isEdit.value && editingRow.value?.id) {
       list = list.filter(item => item.id !== editingRow.value!.id)
@@ -74,7 +74,7 @@ async function loadParents() {
 async function loadEntity() {
   if (!editingRow.value?.id) return
   try {
-    const entity = await fetchMenuEntity(editingRow.value.id)
+    const { data: entity } = await fetchMenuEntity(editingRow.value.id)
     if (!entity) return
     model.title = entity.title || ''
     model.path = entity.path || ''

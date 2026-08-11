@@ -47,7 +47,7 @@ const rules = ref({
 })
 
 async function loadCaptcha() {
-  const { base64, key } = await fetchCaptchaApi()
+  const { data: { base64, key } } = await fetchCaptchaApi()
   captchaImage.value = 'data:image/png;base64,' + base64
   form.captchaKey = key
 }

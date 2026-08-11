@@ -89,26 +89,48 @@ Token 通过 `pinia-plugin-persistedstate` 持久化。storage key 格式为 `${
 
 每个领域一个文件，放在 `src/api/{domain}.ts`。单文件内按"类型 → API 函数 → 查询键"顺序排列。API 函数是纯异步函数，对 vue-query 零感知，只负责请求和返回数据。参考 `src/api/menu.ts`。
 
+**函数命名约定**：
+
+| 前缀                                         | 用途                                    | 是否支持 signal                    | 示例            |
+| -------------------------------------------- | --------------------------------------- | ---------------------------------- | --------------- |
+| `fetch*`                                     | 只读查询，可能被 `useQuery` 使用        | ✅ 第二参数 `signal?: AbortSignal` | `fetchUserList` |
+| `create*` / `update*` / `delete*` / `reset*` | 写操作，只被 `useMutation` 或命令式调用 | ❌ 不需要                          | `createUser`    |
+
+**signal 参数规范**：所有 `fetch*` 函数统一预留 `signal?: AbortSignal` 作为最后一个参数，注入到 axios config 中：
+
+```ts
+export function fetchXxx(params?: XxxParams, signal?: AbortSignal) {
+  return apiGet<XxxItem[]>('/url', { params, signal })
+    .then(({ data, total }) => ({ items: data, total }))
+}
+```
+
 ### 响应解包
 
 后端统一返回 `ApiResponse<T>`（`{ flag, msg, total, time, code }`，定义在 `src/types/global.d.ts`）。解包逻辑集中在 `@/utils/http`：
 
-- `apiGet<T>` — 单实体/树形数据，返回 `msg`（即 `T`）
-- `apiGetList<T>` — 分页列表，返回 `{ items: T[], total }`
+- `apiGet<T>` — 返回 `{ data: T, total: number }`，由 API 函数在调用处自行映射
 - `apiPost<T>` — 增删改，返回 `msg`
 
 业务错误（`code !== 0`）由解包层统一处理并 reject，调用方无需重复判断。
 
 ### vue-query 使用约束
 
-| 场景 | 用 | 不用 |
-|---|---|---|
-| 组件内数据获取 | `useQuery` | 裸 axios / 手动 loading |
-| 需要生命周期钩子的写操作 | `useMutation` | 裸调用 + try/catch |
-| 一次性调用（loading 由 withLoading 接管） | 直接调 API 函数 | `useMutation` |
-| Store 中的命令式请求（login、generateRoutes） | 直接调 API 函数 | vue-query |
+| 场景                                          | 用              | 不用                    |
+| --------------------------------------------- | --------------- | ----------------------- |
+| 组件内数据获取                                | `useQuery`      | 裸 axios / 手动 loading |
+| 需要生命周期钩子的写操作                      | `useMutation`   | 裸调用 + try/catch      |
+| 一次性调用（loading 由 withLoading 接管）     | 直接调 API 函数 | `useMutation`           |
+| Store 中的命令式请求（login、generateRoutes） | 直接调 API 函数 | vue-query               |
 
 **useQuery 必须内联写在视图中**，queryKey 和 queryFn 同处可见。不为单一使用者创建 `queryOptions` 工厂或独立查询文件。
+
+**queryFn 必须解构 `{ signal }` 并透传给 `fetch*` 函数**，否则页面卸载时请求不会自动取消：
+
+```ts
+// ✅ 正确
+queryFn: ({ signal }) => fetchUserList({ pageIndex: 1 }, signal)
+```
 
 **useMutation 仅在确实用到 onMutate / onSuccess / onError / onSettled 时使用**；生命周期内完成副作用（失效缓存、提示、loading 清理），不要在事件处理函数里重复写。
 
@@ -143,24 +165,24 @@ Store 持有跨页面共享的应用状态（token、用户信息、路由菜单
 └── error.ts        # isSuccess / handleBusinessError / handleNetworkError
 ```
 
-`apiGet`/`apiPost`/`apiGetList` 绑定默认实例。多实例场景使用 `createApiHelpers(新实例)` 工厂。
+`apiGet`/`apiPost` 绑定默认实例。多实例场景使用 `createApiHelpers(新实例)` 工厂。
 
 ## 工具函数
 
-| 文件 | 用途 |
-|---|---|
+| 文件                    | 用途                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------------ |
 | `src/utils/feedback.ts` | `message` / `notify` / `confirm` / `alert` / `prompt` / `withLoading` 统一封装，所有用户反馈统一走这里 |
-| `src/utils/encrypt.ts` | `encryptPwdRsa`（RSA 加密密码）、`md5Hash`、`encryptText`/`decryptText`（AES-256-CBC） |
-| `src/utils/dayjs.ts` | dayjs 实例（中文 locale、relativeTime、utc、customParseFormat 插件） |
-| `src/utils/validate.ts` | `isEmail`、`isMobile`、`isURL`、`isIdCard` |
+| `src/utils/encrypt.ts`  | `encryptPwdRsa`（RSA 加密密码）、`md5Hash`、`encryptText`/`decryptText`（AES-256-CBC）                 |
+| `src/utils/dayjs.ts`    | dayjs 实例（中文 locale、relativeTime、utc、customParseFormat 插件）                                   |
+| `src/utils/validate.ts` | `isEmail`、`isMobile`、`isURL`、`isIdCard`                                                             |
 
 ## 共享组件
 
-| 组件 | 文件 | 用途 |
-|---|---|---|
-| ProTable | `src/components/ProTable/index.vue` | 泛型配置驱动表格，支持 selection/expand/tag 列、valueEnum 字典、排序、分页，通过 props 透传绑定 |
-| SelectIcon | `src/components/SelectIcon/index.vue` | 图标选择器（popover + 双标签页），v-model 绑定图标字符串 |
-| ContactSelect | `src/components/ContactSelect/index.vue` | 企业微信组织架构选人弹窗，支持单选/多选，通过 `defineExpose({ open })` 调用返回 Promise |
+| 组件          | 文件                                     | 用途                                                                                            |
+| ------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| ProTable      | `src/components/ProTable/index.vue`      | 泛型配置驱动表格，支持 selection/expand/tag 列、valueEnum 字典、排序、分页，通过 props 透传绑定 |
+| SelectIcon    | `src/components/SelectIcon/index.vue`    | 图标选择器（popover + 双标签页），v-model 绑定图标字符串                                        |
+| ContactSelect | `src/components/ContactSelect/index.vue` | 企业微信组织架构选人弹窗，支持单选/多选，通过 `defineExpose({ open })` 调用返回 Promise         |
 
 ## 页面代码规范
 

@@ -74,7 +74,7 @@ async function loadTree(node: any, resolve: (data: OrgTreeNode[]) => void): Prom
   if (node.level === 0) {
     params.searchKey = searchKey.value
   }
-  const data = await fetchOrgTree(params)
+  const { data } = await fetchOrgTree(params)
   resolve(data)
 }
 

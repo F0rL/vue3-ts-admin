@@ -1,4 +1,4 @@
-import { apiGet, apiGetList, apiPost } from '@/utils/http'
+import { apiGet, apiPost } from '@/utils/http'
 
 // ==================== Types ====================
 
@@ -33,12 +33,12 @@ export interface RolePayload {
 
 // ==================== API Functions ====================
 
-export function fetchRoleList(params?: RoleListParams) {
-  return apiGetList<RoleListItem>('/SysRole/GetRoleList', { params })
+export function fetchRoleList(params?: RoleListParams, signal?: AbortSignal) {
+  return apiGet<RoleListItem[]>('/SysRole/GetRoleList', { params, signal })
 }
 
-export function fetchRoleEntity(id: string) {
-  return apiGet<RoleEntity>('/SysRole/GetRoleEntity', { params: { id } })
+export function fetchRoleEntity(id: string, signal?: AbortSignal) {
+  return apiGet<RoleEntity>('/SysRole/GetRoleEntity', { params: { id }, signal })
 }
 
 export function createRole(data: RolePayload) {

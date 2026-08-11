@@ -21,16 +21,16 @@ const {
   refetch,
 } = useQuery({
   queryKey: [...userKeys.lists(), pageIndex, pageSize, searchKey],
-  queryFn: () =>
+  queryFn: ({ signal }) =>
     fetchUserList({
       pageIndex: pageIndex.value,
       pageSize: pageSize.value,
       searchKey: searchKey.value || undefined,
-    }),
+    }, signal),
   placeholderData: keepPreviousData,
 })
 
-const tableData = computed(() => listRes.value?.items ?? [])
+const tableData = computed(() => listRes.value?.data ?? [])
 const total = computed(() => listRes.value?.total ?? 0)
 
 const columns: ProTableColumn<UserListItem>[] = [

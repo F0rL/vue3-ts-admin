@@ -110,11 +110,11 @@ async function open(row?: { id: string }) {
   resetForm()
 
   try {
-    const treeData = await fetchMenuTree()
+    const { data: treeData } = await fetchMenuTree()
     menuTreeData.value = treeData ?? []
 
     if (isEdit.value) {
-      const entity = await fetchRoleEntity(editingId.value)
+      const { data: entity } = await fetchRoleEntity(editingId.value)
       if (entity) {
         formModel.name = entity.name
         formModel.status = entity.status.value

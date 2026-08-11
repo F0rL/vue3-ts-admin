@@ -18,11 +18,11 @@ const {
   isFetching: loading,
 } = useQuery({
   queryKey: [...roleKeys.lists(), pageIndex, pageSize],
-  queryFn: () => fetchRoleList({ pageIndex: pageIndex.value, pageSize: pageSize.value }),
+  queryFn: ({ signal }) => fetchRoleList({ pageIndex: pageIndex.value, pageSize: pageSize.value }, signal),
   placeholderData: keepPreviousData,
 })
 
-const tableData = computed(() => listRes.value?.items ?? [])
+const tableData = computed(() => listRes.value?.data ?? [])
 const total = computed(() => listRes.value?.total ?? 0)
 
 const columns: ProTableColumn<RoleListItem>[] = [

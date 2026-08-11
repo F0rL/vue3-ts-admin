@@ -27,7 +27,7 @@ const {
   isSuccess: deptReady,
 } = useQuery({
   queryKey: orgKeys.departments(),
-  queryFn: () => fetchDepartmentTree(),
+  queryFn: ({ signal }) => fetchDepartmentTree(undefined, signal),
 })
 
 // 默认选中第一个部门后加载用户列表
@@ -35,18 +35,18 @@ const selectedDeptId = computed(() => currentDeptId.value || '')
 
 const { data: userListData, isFetching: userLoading } = useQuery({
   queryKey: [...orgKeys.users(), selectedDeptId, searchKey, pageIndex, pageSize],
-  queryFn: () =>
+  queryFn: ({ signal }) =>
     fetchOrgUserList({
       departmentId: selectedDeptId.value,
       searchKey: searchKey.value || undefined,
       page: pageIndex.value,
       row: pageSize.value,
-    }),
+    }, signal),
   placeholderData: keepPreviousData,
   enabled: () => !!selectedDeptId.value,
 })
 
-const tableData = computed(() => userListData.value?.items ?? [])
+const tableData = computed(() => userListData.value?.data ?? [])
 const total = computed(() => userListData.value?.total ?? 0)
 
 const treeDefaultExpandedKeys = computed(() => {

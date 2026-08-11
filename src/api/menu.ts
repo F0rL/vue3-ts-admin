@@ -28,20 +28,20 @@ export interface MenuPayload {
 
 // ==================== API Functions ====================
 
-export function fetchUserRightMenu(): Promise<unknown> {
-  return apiPost('/SysMenu/GetUserRightMenu')
+export function fetchUserRightMenu(signal?: AbortSignal): Promise<unknown> {
+  return apiPost('/SysMenu/GetUserRightMenu', undefined, { signal })
 }
 
-export function fetchMenuTree(params?: { searchKey?: string }) {
-  return apiGet<MenuTreeNode[]>('/SysMenu/GetMenuTree', { params })
+export function fetchMenuTree(params?: { searchKey?: string }, signal?: AbortSignal) {
+  return apiGet<MenuTreeNode[]>('/SysMenu/GetMenuTree', { params, signal })
 }
 
-export function fetchMenuEntity(id: string) {
-  return apiGet<MenuTreeNode>('/SysMenu/GetMenuEntity', { params: { id } })
+export function fetchMenuEntity(id: string, signal?: AbortSignal) {
+  return apiGet<MenuTreeNode>('/SysMenu/GetMenuEntity', { params: { id }, signal })
 }
 
-export function fetchParentMenuAll() {
-  return apiGet<MenuTreeNode[]>('/SysMenu/GetParentMenuAll')
+export function fetchParentMenuAll(signal?: AbortSignal) {
+  return apiGet<MenuTreeNode[]>('/SysMenu/GetParentMenuAll', { signal })
 }
 
 export function createMenu(data: MenuPayload) {

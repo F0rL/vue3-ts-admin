@@ -30,12 +30,12 @@ const {
   refetch,
 } = useQuery({
   queryKey: menuKeys.trees(),
-  queryFn: () => fetchMenuTree(searchKey.value ? { searchKey: searchKey.value } : undefined),
+  queryFn: ({ signal }) => fetchMenuTree(searchKey.value ? { searchKey: searchKey.value } : undefined, signal),
 })
 
 const toggleShowMutation = useMutation({
   mutationFn: async ({ rowId, val }: { rowId: string; val: boolean }) => {
-    const entity = await fetchMenuEntity(rowId)
+    const { data: entity } = await fetchMenuEntity(rowId)
     if (!entity) throw new Error()
     await updateMenu({
       id: rowId,
@@ -92,11 +92,11 @@ function handleReset() {
 }
 
 function handleExpandAll() {
-  toggleRows(treeData.value ?? [], true)
+  toggleRows(treeData.value?.data ?? [], true)
 }
 
 function handleCollapseAll() {
-  toggleRows(treeData.value ?? [], false)
+  toggleRows(treeData.value?.data ?? [], false)
 }
 
 /** 打开新增菜单抽屉 */
@@ -172,7 +172,7 @@ async function handleDelete(row: any) {
       <ProTable
         ref="proTableRef"
         :columns="columns"
-        :data="treeData"
+        :data="treeData?.data"
         :loading="loading"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
       >

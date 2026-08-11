@@ -24,7 +24,7 @@ export const useUserStore = defineStore(
     }
 
     async function loadUserInfo() {
-      const user = await fetchUserInfo()
+      const { data: user } = await fetchUserInfo()
       userInfo.value = {
         id: user.id,
         name: user.name,

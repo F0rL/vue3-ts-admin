@@ -1,4 +1,4 @@
-import { apiGet, apiGetList, apiPost } from '@/utils/http'
+import { apiGet, apiPost } from '@/utils/http'
 
 // ==================== Types ====================
 
@@ -58,12 +58,12 @@ export interface UserPayload {
 
 // ==================== API Functions ====================
 
-export function fetchUserList(params?: UserListParams) {
-  return apiGetList<UserListItem>('/SysUser/GetUserList', { params })
+export function fetchUserList(params?: UserListParams, signal?: AbortSignal) {
+  return apiGet<UserListItem[]>('/SysUser/GetUserList', { params, signal })
 }
 
-export function fetchUserEntity(id: string) {
-  return apiGet<UserEntity>('/SysUser/GetUserEntity', { params: { id } })
+export function fetchUserEntity(id: string, signal?: AbortSignal) {
+  return apiGet<UserEntity>('/SysUser/GetUserEntity', { params: { id }, signal })
 }
 
 export function createUser(data: UserPayload) {

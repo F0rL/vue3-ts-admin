@@ -13,18 +13,18 @@ const dateRange = ref<[string, string] | null>(null)
 
 const { data: listRes, isFetching: loading } = useQuery({
   queryKey: [...logKeys.lists(), pageIndex, pageSize, searchKey, dateRange],
-  queryFn: () =>
+  queryFn: ({ signal }) =>
     fetchLogList({
       page: pageIndex.value,
       row: pageSize.value,
       searchKey: searchKey.value || undefined,
       startTime: dateRange.value?.[0] || undefined,
       endTime: dateRange.value?.[1] || undefined,
-    }),
+    }, signal),
   placeholderData: keepPreviousData,
 })
 
-const tableData = computed(() => listRes.value?.items ?? [])
+const tableData = computed(() => listRes.value?.data ?? [])
 const total = computed(() => listRes.value?.total ?? 0)
 
 const columns: ProTableColumn<LogListItem>[] = [

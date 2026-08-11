@@ -109,11 +109,11 @@ async function open(row?: { id: string }) {
   resetForm()
 
   try {
-    const roleList = await fetchRoleList({ pageIndex: 1, pageSize: 100 })
-    roleOptions.value = roleList.items ?? []
+    const { data: roleList } = await fetchRoleList({ pageIndex: 1, pageSize: 100 })
+    roleOptions.value = roleList ?? []
 
     if (isEdit.value) {
-      const entity = await fetchUserEntity(editingId.value)
+      const { data: entity } = await fetchUserEntity(editingId.value)
       formModel.name = entity.name
       formModel.userId = entity.id
       formModel.avatar = entity.avatar
@@ -192,7 +192,7 @@ function handleRemove() {
 async function handleSearchContact() {
   const picked = await contactRef.value?.open({ selectType: 'user', selectNum: 'min' })
   if (!picked?.length) return
-  const entity = await fetchWorkUserEntity({ userId: picked[0].id })
+  const { data: entity } = await fetchWorkUserEntity({ userId: picked[0].id })
   formModel.name = entity.name
   formModel.userId = entity.userid || entity.mobile || ''
   formModel.pwd = formModel.userId + '@123'

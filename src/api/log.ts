@@ -1,4 +1,4 @@
-import { apiGetList } from '@/utils/http'
+import { apiGet } from '@/utils/http'
 
 // ==================== Types ====================
 
@@ -31,8 +31,8 @@ export interface LogListParams {
 
 // ==================== API Functions ====================
 
-export function fetchLogList(params?: LogListParams) {
-  return apiGetList<LogListItem>('/SysLog/GetHttpLogList', { params })
+export function fetchLogList(params?: LogListParams, signal?: AbortSignal) {
+  return apiGet<LogListItem[]>('/SysLog/GetHttpLogList', { params, signal })
 }
 
 // ==================== Query Keys ====================
