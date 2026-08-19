@@ -21,23 +21,38 @@ import { isSuccess, handleBusinessError } from './error'
  *   const mainApi = createApiHelpers(http)
  *   const fileApi = createApiHelpers(httpFile)
  */
+/** 分页数据形状守卫：data 内同时存在 list 数组与 total 数字 */
+function isPaginatedData(payload: unknown): payload is PaginatedData<unknown> {
+  return (
+    typeof payload === 'object' &&
+    payload !== null &&
+    Array.isArray((payload as { list?: unknown }).list) &&
+    typeof (payload as { total?: unknown }).total === 'number'
+  )
+}
+
 export function createApiHelpers(http: AxiosInstance) {
   /**
-   * GET 请求 — 返回解包后的 msg
+   * GET 请求 — 返回解包后的 data
    *
-   * 适用场景：单个实体、树形数据、非分页列表
+   * 适用场景：单个实体、树形数据、分页/非分页列表
+   * 分页响应（data 为 { list, total }）自动拆出 total，保持返回 { data, total } 契约
    */
   async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<{ data: T; total: number }> {
-    const { data: res } = await http.get<ApiResponse<T>>(url, config)
+    const { data: res } = await http.get<ApiResponse<unknown>>(url, config)
     if (!isSuccess(res)) {
       handleBusinessError(res)
       throw new Error(String(res.msg || '请求失败'))
     }
-    return { data: res.msg, total: res.total }
+    const payload = res.data
+    if (isPaginatedData(payload)) {
+      return { data: payload.list as T, total: payload.total }
+    }
+    return { data: payload as T, total: 0 }
   }
 
   /**
-   * POST 请求 — 返回解包后的 msg
+   * POST 请求 — 返回解包后的 data
    *
    * 适用场景：增删改操作、非标准 GET 查询
    */
@@ -47,7 +62,7 @@ export function createApiHelpers(http: AxiosInstance) {
       handleBusinessError(res)
       throw new Error(String(res.msg || '请求失败'))
     }
-    return res.msg
+    return res.data
   }
 
   return { apiGet, apiPost }

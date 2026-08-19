@@ -5,6 +5,9 @@ export const config: {
   /** axios 请求 baseURL，dev 代理 /api */
   API_BASE_URL: string
 
+  /** 文件服务源站，用于拼接后端返回的相对路径（avatar 等） */
+  FILE_BASE_URL: string
+
   /** 应用标题 */
   APP_TITLE: string
 
@@ -12,7 +15,8 @@ export const config: {
   STORAGE_NS: string
 } = {
   BASE_URL: import.meta.env.VITE_APP_BASE_URL,
-  API_BASE_URL: import.meta.env.VITE_APP_BASE_API,
+  API_BASE_URL: import.meta.env.VITE_APP_BASE_API + '/api',
+  FILE_BASE_URL: import.meta.env.VITE_APP_BASE_API,
   APP_TITLE: import.meta.env.VITE_APP_TITLE,
   STORAGE_NS: import.meta.env.VITE_APP_STORAGE_NS,
 }

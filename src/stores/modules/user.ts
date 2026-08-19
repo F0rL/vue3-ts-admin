@@ -25,12 +25,7 @@ export const useUserStore = defineStore(
 
     async function loadUserInfo() {
       const { data: user } = await fetchUserInfo()
-      userInfo.value = {
-        id: user.id,
-        name: user.name,
-        avatar: user.avatar,
-        roles: user.roles,
-      }
+      userInfo.value = user
       return user
     }
 

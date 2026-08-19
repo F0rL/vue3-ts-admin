@@ -21,12 +21,14 @@ const HTTP_STATUS_MESSAGES: Record<number, string> = {
 let isRelogging = false
 
 export function isSuccess(res: ApiResponse<unknown>): boolean {
-  return res.code === 0
+  // 对齐后端 success 计算属性：msg 为空且 code === 0
+  return res.code === 0 && !res.msg
 }
 
 /** 情况③：有响应体，code≠0，业务错误 */
 export function handleBusinessError(res: ApiResponse<unknown>) {
-  message.error(res.msg ? String(res.msg) : '请求失败')
+  const detail = res.errors?.length ? `：${res.errors.join('；')}` : ''
+  message.error(`${res.msg ? String(res.msg) : '请求失败'}${detail}`)
 }
 
 /** 401 鉴权失效：清缓存 + 跳登录页，带防重入锁 */

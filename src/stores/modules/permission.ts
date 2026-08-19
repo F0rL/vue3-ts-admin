@@ -14,7 +14,8 @@ export const usePermissionStore = defineStore('permission', () => {
   const isRoutesLoaded = ref(false)
 
   async function generateRoutes() {
-    const menus = (await fetchUserRightMenu()) as MenuItem[]
+    const { data: menus } = await fetchUserRightMenu()
+    console.log(menus)
     menuData.value = menus
 
     const allowedPaths = collectMenuPaths(menus)
@@ -31,7 +32,7 @@ export const usePermissionStore = defineStore('permission', () => {
   }
 
   function resetRoutes() {
-    router.removeRoute(LAYOUT_ROUTE_NAME)
+    if (router.hasRoute(LAYOUT_ROUTE_NAME)) router.removeRoute(LAYOUT_ROUTE_NAME)
     isRoutesLoaded.value = false
     menuData.value = []
   }

@@ -5,12 +5,13 @@ import ProTable from '@/components/ProTable/index.vue'
 import type { ProTableColumn } from '@/components/ProTable/index.vue'
 import { fetchUserList, deleteUser, userKeys, type UserListItem } from '@/api/user'
 import { confirm, message, withLoading } from '@/utils/feedback'
+import { resolveFileUrl } from '@/utils/file'
 import UserForm from './components/UserForm.vue'
 
 const queryClient = useQueryClient()
 
 const searchKey = ref('')
-const pageIndex = ref(1)
+const page = ref(1)
 const pageSize = ref(10)
 const selectedRows = ref<UserListItem[]>([])
 const userFormRef = useTemplateRef('userFormRef')
@@ -20,13 +21,16 @@ const {
   isFetching: loading,
   refetch,
 } = useQuery({
-  queryKey: [...userKeys.lists(), pageIndex, pageSize, searchKey],
+  queryKey: [...userKeys.lists(), page, pageSize, searchKey],
   queryFn: ({ signal }) =>
-    fetchUserList({
-      pageIndex: pageIndex.value,
-      pageSize: pageSize.value,
-      searchKey: searchKey.value || undefined,
-    }, signal),
+    fetchUserList(
+      {
+        page: page.value,
+        row: pageSize.value,
+        searchKey: searchKey.value || undefined,
+      },
+      signal,
+    ),
   placeholderData: keepPreviousData,
 })
 
@@ -38,10 +42,10 @@ const columns: ProTableColumn<UserListItem>[] = [
     type: 'selection',
     width: 55,
     align: 'center',
-    selectable: (row: UserListItem) => !row._disabled,
+    selectable: (row: UserListItem) => row._disabled,
   },
-  { prop: 'id', label: '账号', align: 'center' },
   { prop: 'name', label: '姓名' },
+  { prop: 'id', label: '账号' },
   { label: '头像', align: 'center', slot: 'avatar' },
   { label: '状态', align: 'center', slot: 'status' },
   { label: '角色', slot: 'roles' },
@@ -63,13 +67,13 @@ async function handleDelete(ids: string[], name?: string) {
 }
 
 function handleSearch() {
-  pageIndex.value = 1
+  page.value = 1
   refetch()
 }
 
 function handleReset() {
   searchKey.value = ''
-  pageIndex.value = 1
+  page.value = 1
   refetch()
 }
 
@@ -135,7 +139,7 @@ function handleSuccess() {
       </div>
 
       <ProTable
-        v-model:current-page="pageIndex"
+        v-model:current-page="page"
         v-model:page-size="pageSize"
         :columns="columns"
         :data="tableData"
@@ -145,20 +149,20 @@ function handleSuccess() {
         @selection-change="handleSelectionChange"
       >
         <template #avatar="{ row }">
-          <el-avatar :src="row.avatar" :size="34">
+          <el-avatar :src="resolveFileUrl(row.avatar)" :size="34">
             <IconEpUser />
           </el-avatar>
         </template>
 
         <template #status="{ row }">
-          <el-tag :type="row.status.value === 1 ? 'success' : 'danger'">
-            {{ row.status.text }}
+          <el-tag :type="row.status === 1 ? 'success' : 'danger'">
+            {{ row.statusName }}
           </el-tag>
         </template>
 
         <template #roles="{ row }">
-          <el-tag v-for="role in row.roleList" :key="role.id" class="mr-1">
-            {{ role.name }}
+          <el-tag v-for="role in row.sysRoleUsers" :key="role.roleId" class="mr-1">
+            {{ role.roleName }}
           </el-tag>
         </template>
 

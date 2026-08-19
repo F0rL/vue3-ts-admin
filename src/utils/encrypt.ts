@@ -1,21 +1,16 @@
-import pki from 'node-forge/lib/pki.js'
 import util from 'node-forge/lib/util.js'
 import md5 from 'node-forge/lib/md5.js'
 import cipher from 'node-forge/lib/cipher.js'
 import random from 'node-forge/lib/random.js'
 import pbkdf2 from 'node-forge/lib/pbkdf2.js'
+import JSEncrypt from 'jsencrypt'
 
-const PROD_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
-MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCAUSr2fQ0oLS02aRzxjXDhxBYu
-UYteGEw1AmZFveB3NzmSWMhXNkKn35gSulKxgMY9mSfnuSbIayEHQe8v7sHPIHv7
-9V1jHqnRZrCiC7+twMh/49Z5tWW9FMh8YrSsdkaZ712vS6i9Of7aIePLB/QdFIMw
-Ybp7B3zGs6iWuzMM2QIDAQAB
------END PUBLIC KEY-----`
-
-const publicKey = pki.publicKeyFromPem(PROD_PUBLIC_KEY_PEM)
+const publicKey = `MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCztAb4vXkNqlVHdbZjIrkjE/khX8QyKxmiECrwXZTtV37Z1t0LPMakhxnfJTdKeZiuWmm88kqV3RJEq5qURyAOJgeOci0QYC9oEcCxtGxaFLUTT9/ipdcqiqvjzPyBOY+rwznzT1OSHnIo3amOg7ldoKioatL2v9W3d9AnLTMuEQIDAQAB`
+const encrypt = new JSEncrypt()
+encrypt.setPublicKey(publicKey)
 
 export function encryptPwdRsa(password: string): string {
-  return util.encode64(publicKey.encrypt(util.encodeUtf8(password)))
+  return encrypt.encrypt(password.toString()) || ''
 }
 
 export function md5Hash(text: string): string {

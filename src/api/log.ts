@@ -29,13 +29,9 @@ export interface LogListParams {
   endTime?: string
 }
 
-// ==================== API Functions ====================
-
 export function fetchLogList(params?: LogListParams, signal?: AbortSignal) {
-  return apiGet<LogListItem[]>('/SysLog/GetHttpLogList', { params, signal })
+  return apiGet<LogListItem[]>('/SysLog/GetListHttpLog', { params, signal })
 }
-
-// ==================== Query Keys ====================
 
 export const logKeys = {
   all: ['logs'] as const,

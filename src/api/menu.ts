@@ -28,8 +28,12 @@ export interface MenuPayload {
 
 // ==================== API Functions ====================
 
-export function fetchUserRightMenu(signal?: AbortSignal): Promise<unknown> {
-  return apiPost('/SysMenu/GetUserRightMenu', undefined, { signal })
+export function fetchUserRightMenu() {
+  return apiGet<MenuTreeNode[]>('/SysMenu/GetUserRightMenu')
+}
+
+export function fetchMenuList(params?: { searchKey?: string }, signal?: AbortSignal) {
+  return apiGet<MenuTreeNode[]>('/SysMenu/GetMenuList', { params, signal })
 }
 
 export function fetchMenuTree(params?: { searchKey?: string }, signal?: AbortSignal) {
@@ -60,5 +64,6 @@ export function deleteMenu(data: { ids: string[] }) {
 
 export const menuKeys = {
   all: ['menus'] as const,
+  list: () => [...menuKeys.all, 'list'] as const,
   trees: () => [...menuKeys.all, 'tree'] as const,
 }

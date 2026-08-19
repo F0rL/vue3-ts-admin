@@ -2,44 +2,35 @@ import { apiGet, apiPost } from '@/utils/http'
 
 // ==================== Types ====================
 
-export interface UserRole {
-  id: string
-  name: string
-}
-
-/** 用户状态：1 启用 / -1 禁用 */
-export interface UserStatus {
-  value: number
-  text: string
+/** 用户角色关联（列表返回） */
+export interface UserRoleItem {
+  roleId: string
+  roleName: string
 }
 
 /** 列表行数据（id 即登录账号） */
 export interface UserListItem {
+  _disabled: boolean
   id: string
-  userId: string
   name: string
+  userId: string | null
+  fileId?: string | null
+  depId?: string | null
+  depName?: string | null
   avatar: string
-  status: UserStatus
-  roleList: UserRole[]
+  wechatWorkUserId?: string | null
+  status: number
+  statusName: string
+  userType: number
+  userTypeName: string
+  isAssociated: boolean
+  sysRoleUsers: UserRoleItem[]
   isDelHandle?: boolean
-  _disabled?: boolean
-}
-
-export interface UserEntity {
-  id: string
-  name: string
-  pwd?: string
-  avatar: string
-  status: UserStatus
-  roleList: UserRole[]
-  userid?: string
-  depName?: string
-  depId?: string
 }
 
 export interface UserListParams {
-  pageIndex?: number
-  pageSize?: number
+  page?: number
+  row?: number
   searchKey?: string
 }
 
@@ -63,7 +54,7 @@ export function fetchUserList(params?: UserListParams, signal?: AbortSignal) {
 }
 
 export function fetchUserEntity(id: string, signal?: AbortSignal) {
-  return apiGet<UserEntity>('/SysUser/GetUserEntity', { params: { id }, signal })
+  return apiGet<UserListItem>('/SysUser/GetUserEntity', { params: { id }, signal })
 }
 
 export function createUser(data: UserPayload) {

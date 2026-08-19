@@ -5,7 +5,7 @@ import ProTable from '@/components/ProTable/index.vue'
 import type { ProTableColumn } from '@/components/ProTable/index.vue'
 import iconMap from '@/icons'
 import {
-  fetchMenuTree,
+  fetchMenuList,
   fetchMenuEntity,
   updateMenu,
   deleteMenu,
@@ -30,7 +30,8 @@ const {
   refetch,
 } = useQuery({
   queryKey: menuKeys.trees(),
-  queryFn: ({ signal }) => fetchMenuTree(searchKey.value ? { searchKey: searchKey.value } : undefined, signal),
+  queryFn: ({ signal }) =>
+    fetchMenuList(searchKey.value ? { searchKey: searchKey.value } : undefined, signal),
 })
 
 const toggleShowMutation = useMutation({
@@ -174,7 +175,8 @@ async function handleDelete(row: any) {
         :columns="columns"
         :data="treeData?.data"
         :loading="loading"
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+        default-expand-all
+        :tree-props="{ children: 'childrenList', hasChildren: 'hasChildren' }"
       >
         <template #icon="{ row }">
           <el-icon v-if="row.icon && iconMap[row.icon]" :size="18">

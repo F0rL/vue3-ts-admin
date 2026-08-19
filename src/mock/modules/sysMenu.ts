@@ -71,7 +71,7 @@ function toEntity(item: MockMenu): unknown {
 export function registerSysMenuMock(mock: MockAdapter) {
   mock.onPost('/api/SysMenu/GetUserRightMenu').reply(() => {
     const tree = buildTree(menus.filter((m) => m.isMenuShow))
-    return [200, makeResp(tree, 0, tree.length)]
+    return [200, makeResp(tree, 0)]
   })
 
   mock.onGet('/api/SysMenu/GetMenuTree').reply((config) => {
@@ -85,13 +85,13 @@ export function registerSysMenuMock(mock: MockAdapter) {
       )
     }
     const tree = buildTree(filtered)
-    return [200, makeResp(tree, 0, tree.length)]
+    return [200, makeResp(tree, 0)]
   })
 
   mock.onGet('/api/SysMenu/GetMenuList').reply((config) => {
     const params = config.params || {}
     const list = buildFlatList(menus, params.searchKey as string | undefined)
-    return [200, makeResp(list, 0, list.length)]
+    return [200, makeResp(list, 0)]
   })
 
   mock.onGet('/api/SysMenu/GetMenuEntity').reply((config) => {

@@ -5,9 +5,10 @@ import type { FormRules, UploadFile, UploadRawFile, UploadRequestOptions } from 
 import { fetchRoleList, type RoleListItem } from '@/api/role'
 import { fetchUserEntity, createUser, updateUser, resetUserPwd, type UserPayload } from '@/api/user'
 import { fetchWorkUserEntity } from '@/api/work'
+import { uploadFileApi } from '@/api/system/sysUpload'
 import { useUserStore } from '@/stores/modules/user'
-import { apiPost } from '@/utils/http'
 import { confirm, message, notify } from '@/utils/feedback'
+import { resolveFileUrl } from '@/utils/file'
 import ContactSelect from '@/components/ContactSelect/index.vue'
 
 interface ContactSelectInstance {
@@ -117,16 +118,24 @@ async function open(row?: { id: string }) {
       formModel.name = entity.name
       formModel.userId = entity.id
       formModel.avatar = entity.avatar
-      formModel.roleIds = entity.roleList.map(role => role.id)
-      formModel.status = entity.status.value
-      formModel.wechat_UserId = entity.userid ?? null
+      formModel.roleIds = entity.sysRoleUsers.map(role => role.roleId)
+      formModel.status = entity.status
+      formModel.wechat_UserId = entity.wechatWorkUserId ?? null
       formModel.wechat_DepName = entity.depName ?? null
       formModel.wechat_DepId = entity.depId ?? null
       fileList.value = entity.avatar
-        ? [{ name: 'avatar', url: entity.avatar, status: 'success', uid: Date.now() }]
+        ? [
+            {
+              name: 'avatar',
+              url: resolveFileUrl(entity.avatar),
+              status: 'success',
+              uid: Date.now(),
+            },
+          ]
         : []
     }
-  } catch {
+  } catch (error) {
+    console.log(error)
     visible.value = false
   } finally {
     loading.value = false
@@ -175,9 +184,11 @@ async function handleUpload(options: UploadRequestOptions) {
   const formData = new FormData()
   formData.append('file', options.file)
   try {
-    const res = await apiPost<{ url: string }>('/SysUpload/UploadFile', formData)
+    const res = await uploadFileApi(formData)
     formModel.avatar = res.url
     options.onSuccess(res)
+    const item = fileList.value.find(f => f.uid === options.file.uid)
+    if (item) item.url = resolveFileUrl(res.url)
   } catch {
     message.error('上传失败')
     options.onError({ status: -1, method: 'post', url: options.action } as any)
@@ -227,6 +238,7 @@ defineExpose({ open })
       :model="formModel"
       :rules="rules"
       label-width="100px"
+      :validate-on-rule-change="false"
       :disabled="saveMutation.isPending.value"
     >
       <div class="text-base font-bold mt-4 mb-3">基本信息</div>
@@ -259,16 +271,18 @@ defineExpose({ open })
         <el-button type="warning" @click="handleResetPwd">重置密码</el-button>
       </el-form-item>
       <el-form-item label="头像" prop="avatar">
-        <el-upload
-          v-model:file-list="fileList"
-          list-type="picture-card"
-          :limit="1"
-          :before-upload="handleBeforeUpload"
-          :http-request="handleUpload"
-          :on-remove="handleRemove"
-        >
-          <IconEpPlus />
-        </el-upload>
+        <div :class="{ 'is-full': fileList.length >= 1 }">
+          <el-upload
+            v-model:file-list="fileList"
+            list-type="picture-card"
+            :limit="1"
+            :before-upload="handleBeforeUpload"
+            :http-request="handleUpload"
+            :on-remove="handleRemove"
+          >
+            <IconEpPlus v-if="fileList.length < 1" />
+          </el-upload>
+        </div>
       </el-form-item>
 
       <div class="text-base font-bold mt-6 mb-3">权限配置</div>
@@ -304,4 +318,8 @@ defineExpose({ open })
   </el-drawer>
 </template>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.is-full :deep(.el-upload--picture-card) {
+  display: none;
+}
+</style>

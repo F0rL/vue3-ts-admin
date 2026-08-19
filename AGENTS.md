@@ -107,12 +107,12 @@ export function fetchXxx(params?: XxxParams, signal?: AbortSignal) {
 
 ### 响应解包
 
-后端统一返回 `ApiResponse<T>`（`{ flag, msg, total, time, code }`，定义在 `src/types/global.d.ts`）。解包逻辑集中在 `@/utils/http`：
+后端统一返回 `ApiResponse<T>`（`{ data, code, msg, errors, success }`，定义在 `src/types/global.d.ts`）。解包逻辑集中在 `@/utils/http`：
 
-- `apiGet<T>` — 返回 `{ data: T, total: number }`，由 API 函数在调用处自行映射
-- `apiPost<T>` — 增删改，返回 `msg`
+- `apiGet<T>` — 返回 `{ data: T, total: number }`。分页响应（`data` 为 `{ list, total }`）由 `isPaginatedData` 自动拆出 `total`，由 API 函数在调用处自行映射
+- `apiPost<T>` — 增删改，返回 `data`
 
-业务错误（`code !== 0`）由解包层统一处理并 reject，调用方无需重复判断。
+业务错误（`code !== 0` 或 `msg` 非空）由解包层统一处理并 reject，调用方无需重复判断。
 
 ### vue-query 使用约束
 
@@ -211,7 +211,7 @@ computed → composables（依赖状态，如 useQuery/useMutation）→ 共享�
 
 Mock 由 `vite.config.ts` 的 `__USE_MOCK__` 构建期变量控制。启用时 `src/mock/index.ts` 动态注册 `axios-mock-adapter` 拦截 `src/utils/http` 实例，在 HTTP 适配层拦截响应（非页面直接设置 mock token）。
 
-`src/mock/utils.ts` 导出 `makeResp(msg, code, total)` 构造标准 ApiResponse。
+`src/mock/utils.ts` 导出 `makeResp(payload, code, total?)` 构造标准 ApiResponse：失败时 `data` 为 null、`msg` 为错误文本；成功时传入 `total` 则 `data` 包装为 `{ list, total }`（分页），否则 `data` 为原始载荷。
 
 ## Git 提交规范
 
