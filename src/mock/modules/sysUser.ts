@@ -182,9 +182,9 @@ export function registerSysUserMock(mock: MockAdapter) {
     return [200, makeResp({ id: genId(), url: AVATAR_PLACEHOLDER, oldName: name, newName: name })]
   })
 
-  // ==================== WeiXinWork ====================
+  // ==================== WxWork ====================
 
-  mock.onGet('/api/WeiXinWork/GetOrgTree').reply(config => {
+  mock.onGet('/api/WxWork/GetOrgTree').reply(config => {
     const params = config.params || {}
     const departmentId = String(params.departmentId ?? '0')
     const searchKey = ((params.searchKey as string) || '').toLowerCase()
@@ -223,7 +223,7 @@ export function registerSysUserMock(mock: MockAdapter) {
     ]
   })
 
-  mock.onGet('/api/WeiXinWork/GetUserEntity').reply(config => {
+  mock.onGet('/api/WxWork/GetUserEntity').reply(config => {
     const params = config.params || {}
     const userId = params.userId as string
     const user = users.find(u => u.userId === userId)

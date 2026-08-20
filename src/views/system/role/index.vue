@@ -3,7 +3,9 @@ import { ref, computed, useTemplateRef } from 'vue'
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/vue-query'
 import ProTable from '@/components/ProTable/index.vue'
 import type { ProTableColumn } from '@/components/ProTable/index.vue'
-import { fetchRoleList, deleteRole, roleKeys, type RoleListItem } from '@/api/role'
+import type { RoleListItem } from '@/api/system/sysRole'
+import { roleKeys } from '@/api/system/sysRole'
+import * as sysRoleApi from '@/api/system/sysRole'
 import { confirm, message, withLoading } from '@/utils/feedback'
 import RoleForm from './components/RoleForm.vue'
 
@@ -13,12 +15,10 @@ const pageIndex = ref(1)
 const pageSize = ref(10)
 const roleFormRef = useTemplateRef('roleFormRef')
 
-const {
-  data: listRes,
-  isFetching: loading,
-} = useQuery({
+const { data: listRes, isFetching: loading } = useQuery({
   queryKey: [...roleKeys.lists(), pageIndex, pageSize],
-  queryFn: ({ signal }) => fetchRoleList({ pageIndex: pageIndex.value, pageSize: pageSize.value }, signal),
+  queryFn: ({ signal }) =>
+    sysRoleApi.fetchRoleList({ page: pageIndex.value, rows: pageSize.value }, signal),
   placeholderData: keepPreviousData,
 })
 
@@ -52,7 +52,7 @@ async function handleDelete(row: any) {
     confirmButtonText: '删除',
   })
   if (!ok) return
-  await withLoading(deleteRole({ ids: [row.id] }), '删除中...')
+  await withLoading(sysRoleApi.deleteRole({ ids: [row.id] }), '删除中...')
   message.success('删除成功')
   await queryClient.invalidateQueries({ queryKey: roleKeys.lists() })
 }
@@ -81,14 +81,12 @@ function handleSuccess() {
         paginated
       >
         <template #action="{ row }">
-          <el-tooltip v-if="isSystemRole(row.id)" content="系统内置，不可编辑" placement="top">
-            <el-button type="primary" link disabled>编辑</el-button>
-          </el-tooltip>
-          <el-button v-else type="primary" link @click="handleEdit(row)"> 编辑 </el-button>
-          <el-tooltip v-if="isSystemRole(row.id)" content="系统内置，不可删除" placement="top">
-            <el-button type="danger" link disabled>删除</el-button>
-          </el-tooltip>
-          <el-button v-else type="danger" link @click="handleDelete(row)"> 删除 </el-button>
+          <el-button type="primary" link @click="handleEdit(row)" :disabled="isSystemRole(row.id)">
+            编辑
+          </el-button>
+          <el-button type="danger" link @click="handleDelete(row)" :disabled="isSystemRole(row.id)">
+            删除
+          </el-button>
         </template>
       </ProTable>
     </div>

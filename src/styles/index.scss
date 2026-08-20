@@ -28,6 +28,10 @@ body {
     sans-serif;
 }
 
+#app {
+  color: #333;
+}
+
 // 筛选表单：栅格布局下去掉 el-form-item 默认底间距，保证容器上下留白一致
 
 .g-filter-form {
@@ -38,4 +42,8 @@ body {
   .el-form-item {
     margin-bottom: 0;
   }
+}
+
+.el-drawer .el-drawer__header {
+  margin-bottom: 0;
 }

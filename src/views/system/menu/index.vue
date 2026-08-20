@@ -4,14 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import ProTable from '@/components/ProTable/index.vue'
 import type { ProTableColumn } from '@/components/ProTable/index.vue'
 import iconMap from '@/icons'
-import {
-  fetchMenuList,
-  fetchMenuEntity,
-  updateMenu,
-  deleteMenu,
-  menuKeys,
-  type MenuTreeNode,
-} from '@/api/menu'
+import type { MenuTreeNode } from '@/api/system/sysMenu'
+import { menuKeys } from '@/api/system/sysMenu'
+import * as sysMenuApi from '@/api/system/sysMenu'
 import { usePermissionStore } from '@/stores/modules/permission'
 import { confirm, message, withLoading } from '@/utils/feedback'
 import MenuForm from './components/MenuForm.vue'
@@ -30,15 +25,14 @@ const {
   refetch,
 } = useQuery({
   queryKey: menuKeys.trees(),
-  queryFn: ({ signal }) =>
-    fetchMenuList(searchKey.value ? { searchKey: searchKey.value } : undefined, signal),
+  queryFn: ({ signal }) => sysMenuApi.fetchMenuList({ searchKey: searchKey.value }, signal),
 })
 
 const toggleShowMutation = useMutation({
   mutationFn: async ({ rowId, val }: { rowId: string; val: boolean }) => {
-    const { data: entity } = await fetchMenuEntity(rowId)
+    const { data: entity } = await sysMenuApi.fetchMenuEntity(rowId)
     if (!entity) throw new Error()
-    await updateMenu({
+    await sysMenuApi.updateMenu({
       id: rowId,
       title: entity.title || '',
       path: entity.path || '',
@@ -127,7 +121,7 @@ async function handleDelete(row: any) {
     confirmButtonText: '删除',
   })
   if (!ok) return
-  await withLoading(deleteMenu({ ids: [row.id] }), '删除中...')
+  await withLoading(sysMenuApi.deleteMenu({ ids: [row.id] }), '删除中...')
   message.success('删除成功')
   await onMenuChanged()
 }

@@ -3,14 +3,8 @@ import { ref, reactive, computed, useTemplateRef } from 'vue'
 import { useMutation } from '@tanstack/vue-query'
 import type { FormRules } from 'element-plus'
 import SelectIcon from '@/components/SelectIcon/index.vue'
-import {
-  fetchParentMenuAll,
-  fetchMenuEntity,
-  createMenu,
-  updateMenu,
-  type MenuPayload,
-  type MenuTreeNode,
-} from '@/api/menu'
+import type { MenuPayload, MenuTreeNode } from '@/api/system/sysMenu'
+import * as sysMenuApi from '@/api/system/sysMenu'
 import { message } from '@/utils/feedback'
 
 const emit = defineEmits<{
@@ -45,7 +39,7 @@ const isEdit = computed(() => !!editingRow.value)
 
 const saveMutation = useMutation({
   mutationFn: (payload: MenuPayload) =>
-    payload.id ? updateMenu(payload) : createMenu(payload),
+    payload.id ? sysMenuApi.updateMenu(payload) : sysMenuApi.createMenu(payload),
   onSuccess: () => {
     message.success('保存成功')
     visible.value = false
@@ -60,7 +54,7 @@ function resetForm() {
 
 async function loadParents() {
   try {
-    const { data } = await fetchParentMenuAll()
+    const { data } = await sysMenuApi.fetchParentMenuAll()
     let list: { id: string; title: string }[] = data
     if (isEdit.value && editingRow.value?.id) {
       list = list.filter(item => item.id !== editingRow.value!.id)
@@ -74,7 +68,7 @@ async function loadParents() {
 async function loadEntity() {
   if (!editingRow.value?.id) return
   try {
-    const { data: entity } = await fetchMenuEntity(editingRow.value.id)
+    const { data: entity } = await sysMenuApi.fetchMenuEntity(editingRow.value.id)
     if (!entity) return
     model.title = entity.title || ''
     model.path = entity.path || ''

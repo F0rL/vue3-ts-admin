@@ -6,7 +6,7 @@ import { message } from '@/utils/feedback'
 import { useUserStore } from '@/stores/modules/user'
 import { useRememberStore } from '@/stores/modules/remember'
 import { md5Hash } from '@/utils/encrypt'
-import { fetchCaptcha as fetchCaptchaApi } from '@/api/auth'
+import * as authApi from '@/api/system/auth'
 
 const router = useRouter()
 const route = useRoute()
@@ -47,7 +47,7 @@ const rules = ref({
 })
 
 async function loadCaptcha() {
-  const { data: { base64, key } } = await fetchCaptchaApi()
+  const { data: { base64, key } } = await authApi.fetchCaptcha()
   captchaImage.value = 'data:image/png;base64,' + base64
   form.captchaKey = key
 }

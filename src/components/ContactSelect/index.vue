@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { fetchOrgTree, type OrgTreeNode } from '@/api/work'
+import type { OrgTreeNode } from '@/api/system/wxWork'
+import * as wxWorkApi from '@/api/system/wxWork'
 
 interface SelectedItem {
   id: string
@@ -74,7 +75,7 @@ async function loadTree(node: any, resolve: (data: OrgTreeNode[]) => void): Prom
   if (node.level === 0) {
     params.searchKey = searchKey.value
   }
-  const { data } = await fetchOrgTree(params)
+  const { data } = await wxWorkApi.fetchOrgTree(params)
   resolve(data)
 }
 

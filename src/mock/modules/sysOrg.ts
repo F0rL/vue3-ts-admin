@@ -100,13 +100,13 @@ function getUserList(departmentId: string, searchKey: string, page: number, row:
 
 export function registerSysOrgMock(mock: MockAdapter) {
   // 部门树
-  mock.onPost('/api/WeiXinWork/GetTreeDepartmentList').reply(() => {
+  mock.onPost('/api/WxWork/GetTreeDepartmentList').reply(() => {
     const tree = buildDeptTree()
     return [200, makeResp(tree)]
   })
 
   // 组织成员列表
-  mock.onGet('/api/WeiXinWork/GetUserList').reply(config => {
+  mock.onGet('/api/WxWork/GetUserList').reply(config => {
     const params = config.params || {}
     const departmentId = (params.departmentId as string) || '1'
     const searchKey = (params.searchKey as string) || ''
@@ -118,7 +118,7 @@ export function registerSysOrgMock(mock: MockAdapter) {
   })
 
   // 刷新缓存
-  mock.onGet('/api/WeiXinWork/UserRefresh').reply(() => {
+  mock.onGet('/api/WxWork/UserRefresh').reply(() => {
     return [200, makeResp(null)]
   })
 }

@@ -63,12 +63,12 @@ export function fetchOrgTree(
   },
   signal?: AbortSignal,
 ) {
-  return apiGet<OrgTreeNode[]>('/WeiXinWork/GetOrgTree', { params, signal })
+  return apiGet<OrgTreeNode[]>('/WxWork/GetOrgTree', { params, signal })
 }
 
 /** 获取企业微信用户详情（关联人员时自动填充账号信息） */
 export function fetchWorkUserEntity(params: { userId: string }, signal?: AbortSignal) {
-  return apiGet<WorkUserEntity>('/WeiXinWork/GetUserEntity', { params, signal })
+  return apiGet<WorkUserEntity>('/WxWork/GetUserEntity', { params, signal })
 }
 
 /**
@@ -76,19 +76,19 @@ export function fetchWorkUserEntity(params: { userId: string }, signal?: AbortSi
  * @param type 部门类型筛选，不传获取全部
  */
 export function fetchDepartmentTree(params?: { type?: number }, signal?: AbortSignal) {
-  return apiPost<DepartmentTreeNode[]>('/WeiXinWork/GetTreeDepartmentList', params, { signal })
+  return apiPost<DepartmentTreeNode[]>('/WxWork/GetTreeDepartmentList', params, { signal })
 }
 
 /**
  * 获取组织架构成员列表（分页）
  */
 export function fetchOrgUserList(params: OrgUserListParams, signal?: AbortSignal) {
-  return apiGet<OrgUserItem[]>('/WeiXinWork/GetUserList', { params, signal })
+  return apiGet<OrgUserItem[]>('/WxWork/GetUserList', { params, signal })
 }
 
 /** 刷新组织架构缓存 */
 export function refreshOrgUsers() {
-  return apiGet<void>('/WeiXinWork/UserRefresh')
+  return apiGet<void>('/WxWork/UserRefresh')
 }
 
 // ==================== Query Keys ====================

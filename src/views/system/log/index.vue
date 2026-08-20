@@ -3,7 +3,9 @@ import { ref, computed } from 'vue'
 import { useQuery, keepPreviousData } from '@tanstack/vue-query'
 import ProTable from '@/components/ProTable/index.vue'
 import type { ProTableColumn } from '@/components/ProTable/index.vue'
-import { fetchLogList, logKeys, type LogListItem } from '@/api/log'
+import type { LogListItem } from '@/api/system/sysLog'
+import { logKeys } from '@/api/system/sysLog'
+import * as sysLogApi from '@/api/system/sysLog'
 
 const searchKey = ref('')
 const pageIndex = ref(1)
@@ -14,13 +16,16 @@ const dateRange = ref<[string, string] | null>(null)
 const { data: listRes, isFetching: loading } = useQuery({
   queryKey: [...logKeys.lists(), pageIndex, pageSize, searchKey, dateRange],
   queryFn: ({ signal }) =>
-    fetchLogList({
-      page: pageIndex.value,
-      row: pageSize.value,
-      searchKey: searchKey.value || undefined,
-      startTime: dateRange.value?.[0] || undefined,
-      endTime: dateRange.value?.[1] || undefined,
-    }, signal),
+    sysLogApi.fetchLogList(
+      {
+        page: pageIndex.value,
+        rows: pageSize.value,
+        searchKey: searchKey.value || undefined,
+        startTime: dateRange.value?.[0] || undefined,
+        endTime: dateRange.value?.[1] || undefined,
+      },
+      signal,
+    ),
   placeholderData: keepPreviousData,
 })
 
@@ -28,14 +33,14 @@ const tableData = computed(() => listRes.value?.data ?? [])
 const total = computed(() => listRes.value?.total ?? 0)
 
 const columns: ProTableColumn<LogListItem>[] = [
-  { prop: 'path', label: '接口地址', minWidth: 200, showOverflowTooltip: true },
-  { prop: 'name', label: '接口描述', minWidth: 160, showOverflowTooltip: true },
+  { prop: 'actionName', label: '操作名称', minWidth: 120, showOverflowTooltip: true },
+  { prop: 'url', label: '接口地址', minWidth: 220, showOverflowTooltip: true },
   { prop: 'method', label: '请求类型', align: 'center', width: 100 },
-  { prop: 'host', label: '请求Host', align: 'center', minWidth: 160 },
-  { prop: 'executeStartTime', label: '请求开始时间', align: 'center', width: 180 },
-  { prop: 'executeEndTime', label: '请求结束时间', align: 'center', width: 180 },
-  { prop: 'elaspedTime', label: '请求响应时长(ms)', align: 'center', width: 160 },
-  { label: '调用人员', align: 'center', width: 120, slot: 'user' },
+  { prop: 'statusCode', label: '状态码', align: 'center', width: 90, slot: 'statusCode' },
+  { prop: 'ipAddress', label: '客户端IP', align: 'center', minWidth: 150 },
+  { prop: 'userName', label: '调用人员', align: 'center', width: 110 },
+  { prop: 'createTime', label: '请求时间', align: 'center', width: 170 },
+  { prop: 'elapsed', label: '请求响应时长(ms)', align: 'center', width: 150 },
 ]
 
 const disabledDate = (date: Date) => date.getTime() > Date.now()
@@ -113,8 +118,10 @@ function handleReset() {
         :total="total"
         paginated
       >
-        <template #user="{ row }">
-          {{ row.user?.name ?? '' }}
+        <template #statusCode="{ row }">
+          <el-tag :type="row.statusCode >= 200 && row.statusCode < 300 ? 'success' : 'danger'">
+            {{ row.statusCode }}
+          </el-tag>
         </template>
       </ProTable>
     </div>

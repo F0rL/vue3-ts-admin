@@ -3,14 +3,9 @@ import { ref, computed, watch } from 'vue'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/vue-query'
 import ProTable from '@/components/ProTable/index.vue'
 import type { ProTableColumn } from '@/components/ProTable/index.vue'
-import {
-  fetchDepartmentTree,
-  fetchOrgUserList,
-  refreshOrgUsers,
-  orgKeys,
-  type DepartmentTreeNode,
-  type OrgUserItem,
-} from '@/api/work'
+import type { DepartmentTreeNode, OrgUserItem } from '@/api/system/wxWork'
+import { orgKeys } from '@/api/system/wxWork'
+import * as wxWorkApi from '@/api/system/wxWork'
 import { message, withLoading } from '@/utils/feedback'
 
 const queryClient = useQueryClient()
@@ -27,7 +22,7 @@ const {
   isSuccess: deptReady,
 } = useQuery({
   queryKey: orgKeys.departments(),
-  queryFn: ({ signal }) => fetchDepartmentTree(undefined, signal),
+  queryFn: ({ signal }) => wxWorkApi.fetchDepartmentTree(undefined, signal),
 })
 
 // 默认选中第一个部门后加载用户列表
@@ -36,7 +31,7 @@ const selectedDeptId = computed(() => currentDeptId.value || '')
 const { data: userListData, isFetching: userLoading } = useQuery({
   queryKey: [...orgKeys.users(), selectedDeptId, searchKey, pageIndex, pageSize],
   queryFn: ({ signal }) =>
-    fetchOrgUserList({
+    wxWorkApi.fetchOrgUserList({
       departmentId: selectedDeptId.value,
       searchKey: searchKey.value || undefined,
       page: pageIndex.value,
@@ -93,7 +88,7 @@ function handleReset() {
 
 /** 刷新缓存 */
 async function handleRefresh() {
-  await withLoading(refreshOrgUsers(), '刷新中...')
+  await withLoading(wxWorkApi.refreshOrgUsers(), '刷新中...')
   message.success('缓存刷新成功')
   await queryClient.invalidateQueries({ queryKey: orgKeys.departments() })
   await queryClient.invalidateQueries({ queryKey: orgKeys.users() })

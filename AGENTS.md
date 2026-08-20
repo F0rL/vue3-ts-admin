@@ -87,7 +87,15 @@ Token 通过 `pinia-plugin-persistedstate` 持久化。storage key 格式为 `${
 
 ### API 文件结构
 
-每个领域一个文件，放在 `src/api/{domain}.ts`。单文件内按"类型 → API 函数 → 查询键"顺序排列。API 函数是纯异步函数，对 vue-query 零感知，只负责请求和返回数据。参考 `src/api/menu.ts`。
+每个领域一个文件。系统基础架构相关接口统一放在 `src/api/system/` 下，其余业务领域放在 `src/api/{domain}.ts`。文件名取请求路径的接口类名首字母小写（如 `/SysLog/GetListHttpLog` → `sysLog.ts`、`/WxWork/GetOrgTree` → `wxWork.ts`）。单文件内按"类型 → API 函数 → 查询键"顺序排列。API 函数是纯异步函数，对 vue-query 零感知，只负责请求和返回数据。
+
+**调用方式**：接口方法用命名空间导入，类型与查询键常量用具名导入，避免接口方法与组件方法混淆：
+
+```ts
+import * as sysLogApi from '@/api/system/sysLog' // 仅方法，可调用
+import { logKeys } from '@/api/system/sysLog'     // 常量
+import type { LogListItem } from '@/api/system/sysLog' // 类型
+```
 
 **函数命名约定**：
 

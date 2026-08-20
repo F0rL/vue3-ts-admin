@@ -19,8 +19,8 @@ export interface RoleListItem {
 }
 
 export interface RoleListParams {
-  pageIndex?: number
-  pageSize?: number
+  page: number
+  rows: number
 }
 
 export interface RolePayload {

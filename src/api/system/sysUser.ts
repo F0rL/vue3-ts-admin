@@ -29,8 +29,8 @@ export interface UserListItem {
 }
 
 export interface UserListParams {
-  page?: number
-  row?: number
+  page: number
+  rows: number
   searchKey?: string
 }
 

@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, reactive, computed, useTemplateRef } from 'vue'
 import { useMutation } from '@tanstack/vue-query'
-import { fetchRoleEntity, createRole, updateRole, type RolePayload } from '@/api/role'
-import { fetchMenuTree, type MenuTreeNode } from '@/api/menu'
+import type { RolePayload } from '@/api/system/sysRole'
+import * as sysRoleApi from '@/api/system/sysRole'
+import type { MenuTreeNode } from '@/api/system/sysMenu'
+import * as sysMenuApi from '@/api/system/sysMenu'
 import type { FormRules } from 'element-plus'
 import { message } from '@/utils/feedback'
 
@@ -33,7 +35,7 @@ const isEdit = computed(() => !!editingId.value)
 
 const saveMutation = useMutation({
   mutationFn: (payload: RolePayload) =>
-    payload.id ? updateRole(payload) : createRole(payload),
+    payload.id ? sysRoleApi.updateRole(payload) : sysRoleApi.createRole(payload),
   onSuccess: () => {
     message.success('保存成功')
     visible.value = false
@@ -110,11 +112,11 @@ async function open(row?: { id: string }) {
   resetForm()
 
   try {
-    const { data: treeData } = await fetchMenuTree()
+    const { data: treeData } = await sysMenuApi.fetchMenuTree()
     menuTreeData.value = treeData ?? []
 
     if (isEdit.value) {
-      const { data: entity } = await fetchRoleEntity(editingId.value)
+      const { data: entity } = await sysRoleApi.fetchRoleEntity(editingId.value)
       if (entity) {
         formModel.name = entity.name
         formModel.status = entity.status.value

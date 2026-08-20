@@ -1,36 +1,42 @@
 <script setup lang="ts">
 import { ref, reactive, computed, useTemplateRef } from 'vue'
-import { useMutation } from '@tanstack/vue-query'
+import { useMutation, useQuery } from '@tanstack/vue-query'
 import type { FormRules, UploadFile, UploadRawFile, UploadRequestOptions } from 'element-plus'
-import { fetchRoleList, type RoleListItem } from '@/api/role'
-import { fetchUserEntity, createUser, updateUser, resetUserPwd, type UserPayload } from '@/api/user'
-import { fetchWorkUserEntity } from '@/api/work'
-import { uploadFileApi } from '@/api/system/sysUpload'
+import type { RoleListItem } from '@/api/system/sysRole'
+import { roleKeys } from '@/api/system/sysRole'
+import * as sysRoleApi from '@/api/system/sysRole'
+import type { UserPayload } from '@/api/system/sysUser'
+import * as sysUserApi from '@/api/system/sysUser'
+import * as wxWorkApi from '@/api/system/wxWork'
+import * as sysUploadApi from '@/api/system/sysUpload'
 import { useUserStore } from '@/stores/modules/user'
-import { confirm, message, notify } from '@/utils/feedback'
+import { confirm, message, notify, withLoading } from '@/utils/feedback'
 import { resolveFileUrl } from '@/utils/file'
+import { validateImageFile } from '@/utils/file'
 import ContactSelect from '@/components/ContactSelect/index.vue'
-
-interface ContactSelectInstance {
-  open(options: {
-    selectType: string
-    selectNum: string
-  }): Promise<{ id: string; name: string; type: number }[] | null | undefined>
-}
-
 const emit = defineEmits<{
   success: []
 }>()
 
+const userStore = useUserStore()
+
 const visible = ref(false)
 const editingId = ref('')
 const formRef = useTemplateRef('formRef')
-const contactRef = useTemplateRef<ContactSelectInstance>('contactRef')
+const contactRef = useTemplateRef('contactRef')
 const loading = ref(false)
 const fileList = ref<UploadFile[]>([])
-const roleOptions = ref<RoleListItem[]>([])
 
-const formModel = reactive({
+/** 角色列表（缓存 1 分钟，避免每次打开抽屉都重新请求） */
+const { data: roleOptions } = useQuery<RoleListItem[]>({
+  queryKey: roleKeys.lists(),
+  queryFn: ({ signal }) =>
+    sysRoleApi.fetchRoleList({ page: 1, rows: 999 }, signal).then(({ data }) => data ?? []),
+  staleTime: 60 * 1000,
+})
+
+/** 表单初始值，用于 resetForm 整体重置 */
+const INITIAL_FORM = {
   userId: '',
   name: '',
   pwd: '',
@@ -41,10 +47,12 @@ const formModel = reactive({
   wechat_UserId: null as string | null,
   wechat_DepId: null as string | null,
   wechat_DepName: null as string | null,
-})
+}
+
+const formModel = reactive({ ...INITIAL_FORM })
 
 const isEdit = computed(() => !!editingId.value)
-const isSuperAdmin = computed(() => useUserStore().roles.some(role => role.id === '10086'))
+const isSuperAdmin = computed(() => userStore.roles.some(role => role.id === '10086'))
 
 const rules = computed<FormRules>(() => ({
   name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
@@ -54,7 +62,7 @@ const rules = computed<FormRules>(() => ({
     {
       required: !isEdit.value,
       pattern: /^(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,}$/,
-      message: '最少6位数字或者字母，且至少有1个特殊字符',
+      message: '至少6位，且至少包含1个特殊字符（! @ # $ % ^ & *）',
       trigger: 'blur',
     },
   ],
@@ -78,7 +86,8 @@ const rules = computed<FormRules>(() => ({
 }))
 
 const saveMutation = useMutation({
-  mutationFn: (payload: UserPayload) => (isEdit.value ? updateUser(payload) : createUser(payload)),
+  mutationFn: (payload: UserPayload) =>
+    isEdit.value ? sysUserApi.updateUser(payload) : sysUserApi.createUser(payload),
   onSuccess: () => {
     message.success('保存成功')
     visible.value = false
@@ -87,55 +96,47 @@ const saveMutation = useMutation({
 })
 
 function resetForm() {
-  formModel.userId = ''
-  formModel.name = ''
-  formModel.pwd = ''
-  formModel.pwd1 = ''
-  formModel.avatar = ''
-  formModel.roleIds = []
-  formModel.status = 1
-  formModel.wechat_UserId = null
-  formModel.wechat_DepId = null
-  formModel.wechat_DepName = null
+  Object.assign(formModel, INITIAL_FORM)
   fileList.value = []
-  roleOptions.value = []
   formRef.value?.clearValidate()
 }
 
 /** 打开新增/编辑账户抽屉 */
-async function open(row?: { id: string }) {
+function open(row?: { id: string }) {
   editingId.value = row?.id ?? ''
-  visible.value = true
-  loading.value = true
   resetForm()
+  visible.value = true
+}
+
+/** 抽屉打开动画结束后加载数据，避免过渡期间更新组件触发 Vue 内部错误 */
+async function handleOpened() {
+  if (!isEdit.value) return
+
+  loading.value = true
+  formRef.value?.clearValidate()
 
   try {
-    const { data: roleList } = await fetchRoleList({ pageIndex: 1, pageSize: 100 })
-    roleOptions.value = roleList ?? []
-
-    if (isEdit.value) {
-      const { data: entity } = await fetchUserEntity(editingId.value)
-      formModel.name = entity.name
-      formModel.userId = entity.id
-      formModel.avatar = entity.avatar
-      formModel.roleIds = entity.sysRoleUsers.map(role => role.roleId)
-      formModel.status = entity.status
-      formModel.wechat_UserId = entity.wechatWorkUserId ?? null
-      formModel.wechat_DepName = entity.depName ?? null
-      formModel.wechat_DepId = entity.depId ?? null
-      fileList.value = entity.avatar
-        ? [
-            {
-              name: 'avatar',
-              url: resolveFileUrl(entity.avatar),
-              status: 'success',
-              uid: Date.now(),
-            },
-          ]
-        : []
-    }
-  } catch (error) {
-    console.log(error)
+    const { data: entity } = await sysUserApi.fetchUserEntity(editingId.value)
+    formModel.name = entity.name
+    formModel.userId = entity.id
+    formModel.avatar = entity.avatar
+    formModel.roleIds = entity.sysRoleUsers.map(role => role.roleId)
+    formModel.status = entity.status
+    formModel.wechat_UserId = entity.wechatWorkUserId ?? null
+    formModel.wechat_DepName = entity.depName ?? null
+    formModel.wechat_DepId = entity.depId ?? null
+    fileList.value = entity.avatar
+      ? [
+          {
+            name: 'avatar',
+            url: resolveFileUrl(entity.avatar),
+            status: 'success',
+            uid: Date.now(),
+          },
+        ]
+      : []
+  } catch {
+    message.error('加载失败')
     visible.value = false
   } finally {
     loading.value = false
@@ -165,33 +166,26 @@ async function handleSave() {
 }
 
 function handleBeforeUpload(file: UploadRawFile) {
-  const isValid =
-    /\.(jpg|jpeg|png|bmp)$/i.test(file.name) ||
-    ['image/jpeg', 'image/png', 'image/bmp'].includes(file.type)
-  const isLt2M = file.size / 1024 / 1024 <= 2
-  if (!isValid) {
-    message.error('只支持 jpg/jpeg/png/bmp 格式')
-    return false
-  }
-  if (!isLt2M) {
-    message.error('图片大小不能超过 2MB')
-    return false
-  }
-  return true
+  return validateImageFile(file)
 }
 
 async function handleUpload(options: UploadRequestOptions) {
   const formData = new FormData()
   formData.append('file', options.file)
   try {
-    const res = await uploadFileApi(formData)
+    const res = await sysUploadApi.uploadFileApi(formData)
     formModel.avatar = res.url
     options.onSuccess(res)
     const item = fileList.value.find(f => f.uid === options.file.uid)
     if (item) item.url = resolveFileUrl(res.url)
   } catch {
     message.error('上传失败')
-    options.onError({ status: -1, method: 'post', url: options.action } as any)
+    const error = Object.assign(new Error('上传失败'), {
+      status: -1,
+      method: options.method,
+      url: options.action,
+    })
+    options.onError(error as Parameters<typeof options.onError>[0])
   }
 }
 
@@ -203,7 +197,7 @@ function handleRemove() {
 async function handleSearchContact() {
   const picked = await contactRef.value?.open({ selectType: 'user', selectNum: 'min' })
   if (!picked?.length) return
-  const { data: entity } = await fetchWorkUserEntity({ userId: picked[0].id })
+  const { data: entity } = await wxWorkApi.fetchWorkUserEntity({ userId: picked[0].id })
   formModel.name = entity.name
   formModel.userId = entity.userid || entity.mobile || ''
   formModel.pwd = formModel.userId + '@123'
@@ -217,7 +211,7 @@ async function handleSearchContact() {
 async function handleResetPwd() {
   const ok = await confirm('确认重置此账号密码？', '提示')
   if (!ok) return
-  await resetUserPwd({ userId: editingId.value })
+  await withLoading(sysUserApi.resetUserPwd({ userId: editingId.value }), '重置中...')
   notify.success('重置成功，新密码为: 账号 + @258   （示例: user@258）')
 }
 
@@ -231,6 +225,7 @@ defineExpose({ open })
     direction="rtl"
     size="560px"
     :close-on-click-modal="false"
+    @opened="handleOpened"
   >
     <el-form
       ref="formRef"

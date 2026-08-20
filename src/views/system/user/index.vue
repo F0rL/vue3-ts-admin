@@ -3,7 +3,9 @@ import { ref, computed, useTemplateRef } from 'vue'
 import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/vue-query'
 import ProTable from '@/components/ProTable/index.vue'
 import type { ProTableColumn } from '@/components/ProTable/index.vue'
-import { fetchUserList, deleteUser, userKeys, type UserListItem } from '@/api/user'
+import type { UserListItem } from '@/api/system/sysUser'
+import { userKeys } from '@/api/system/sysUser'
+import * as sysUserApi from '@/api/system/sysUser'
 import { confirm, message, withLoading } from '@/utils/feedback'
 import { resolveFileUrl } from '@/utils/file'
 import UserForm from './components/UserForm.vue'
@@ -21,12 +23,12 @@ const {
   isFetching: loading,
   refetch,
 } = useQuery({
-  queryKey: [...userKeys.lists(), page, pageSize, searchKey],
+  queryKey: [...userKeys.lists(), page, pageSize],
   queryFn: ({ signal }) =>
-    fetchUserList(
+    sysUserApi.fetchUserList(
       {
         page: page.value,
-        row: pageSize.value,
+        rows: pageSize.value,
         searchKey: searchKey.value || undefined,
       },
       signal,
@@ -42,7 +44,7 @@ const columns: ProTableColumn<UserListItem>[] = [
     type: 'selection',
     width: 55,
     align: 'center',
-    selectable: (row: UserListItem) => row._disabled,
+    selectable: row => row._disabled,
   },
   { prop: 'name', label: '姓名' },
   { prop: 'id', label: '账号' },
@@ -60,21 +62,21 @@ async function handleDelete(ids: string[], name?: string) {
     confirmButtonText: '删除',
   })
   if (!ok) return
-  await withLoading(deleteUser({ ids }), '删除中...')
+  await withLoading(sysUserApi.deleteUser({ ids }), '删除中...')
   message.success('删除成功')
   await queryClient.invalidateQueries({ queryKey: userKeys.lists() })
   selectedRows.value = []
 }
 
 function handleSearch() {
-  page.value = 1
-  refetch()
+  if (page.value === 1) refetch()
+  else page.value = 1
 }
 
 function handleReset() {
   searchKey.value = ''
-  page.value = 1
-  refetch()
+  if (page.value === 1) refetch()
+  else page.value = 1
 }
 
 function handleSelectionChange(rows: UserListItem[]) {
@@ -114,6 +116,7 @@ function handleSuccess() {
           placeholder="请输入账号或姓名"
           clearable
           @keyup.enter="handleSearch"
+          @clear="handleReset"
         />
         <el-button class="ml-3" type="primary" @click="handleSearch">
           <template #icon><IconEpSearch /></template>
@@ -167,7 +170,13 @@ function handleSuccess() {
         </template>
 
         <template #action="{ row }">
-          <el-button v-if="row.isDelHandle !== false" type="primary" link @click="handleEdit(row)">
+          <el-button
+            v-if="row.isDelHandle !== false"
+            type="primary"
+            link
+            @click="handleEdit(row)"
+            :disabled="!row._disabled"
+          >
             编辑
           </el-button>
           <el-button
@@ -175,6 +184,7 @@ function handleSuccess() {
             type="danger"
             link
             @click="handleDelete([row.id], row.name)"
+            :disabled="!row._disabled"
           >
             删除
           </el-button>
