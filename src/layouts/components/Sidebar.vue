@@ -1,21 +1,19 @@
 <template>
-  <div class="flex-1 overflow-x-hidden transition-all duration-300" :class="isCollapse ? 'w-16' : 'w-56'">
+  <div
+    class="flex-1 overflow-x-hidden transition-all duration-300"
+    :class="isCollapse ? 'w-16' : 'w-56'"
+  >
     <el-scrollbar>
       <el-menu
         :default-active="activeMenu"
         :collapse="isCollapse"
         :collapse-transition="false"
-        :unique-opened="true"
         router
         background-color="transparent"
         text-color="#475569"
         active-text-color="#2563eb"
       >
-        <SidebarItem
-          v-for="item in menuData"
-          :key="item.id"
-          :item="item"
-        />
+        <SidebarItem v-for="item in menuData" :key="item.id" :item="item" />
       </el-menu>
     </el-scrollbar>
   </div>

@@ -35,6 +35,22 @@ export function filterRoutes(
     })
 }
 
+export function findMenuTrail(menuTree: MenuItem[], path: string): MenuItem[] {
+  const target = path.replace(/^\/+/, '')
+  function walk(nodes: MenuItem[], trail: MenuItem[]): MenuItem[] | null {
+    for (const node of nodes) {
+      const next = [...trail, node]
+      if (node.path === target) return next
+      if (node.children?.length) {
+        const found = walk(node.children, next)
+        if (found) return found
+      }
+    }
+    return null
+  }
+  return walk(menuTree, []) ?? []
+}
+
 export function getFirstVisiblePath(menuTree: MenuItem[]): string | null {
   for (const node of menuTree) {
     if (node.isMenuShow === false) continue

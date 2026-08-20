@@ -47,6 +47,12 @@ export interface UserPayload {
   wechat_DepName?: string | null
 }
 
+export interface UpdatePwdPayload {
+  oldPwd: string
+  newPwd1: string
+  newPwd2: string
+}
+
 // ==================== API Functions ====================
 
 export function fetchUserList(params?: UserListParams, signal?: AbortSignal) {
@@ -71,6 +77,10 @@ export function deleteUser(data: { ids: string[] }) {
 
 export function resetUserPwd(data: { userId: string }) {
   return apiPost('/SysUser/ResetPwd', data)
+}
+
+export function updateUserPwd(data: UpdatePwdPayload) {
+  return apiPost('/SysUser/UpdatePwd', data)
 }
 
 // ==================== Query Keys ====================

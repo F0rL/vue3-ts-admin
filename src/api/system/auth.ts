@@ -14,7 +14,7 @@ export interface UserInfo {
   id: string
   name: string
   avatar: string
-  roles: { id: string; name: string }[]
+  sysRoleUsers: { id: string; name: string }[]
 }
 
 // ==================== API Functions ====================
