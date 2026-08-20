@@ -28,15 +28,22 @@ const {
 // 默认选中第一个部门后加载用户列表
 const selectedDeptId = computed(() => currentDeptId.value || '')
 
-const { data: userListData, isFetching: userLoading, refetch } = useQuery({
+const {
+  data: userListData,
+  isFetching: userLoading,
+  refetch,
+} = useQuery({
   queryKey: [...orgKeys.users(), selectedDeptId, pageIndex, pageSize],
   queryFn: ({ signal }) =>
-    wxWorkApi.fetchOrgUserList({
-      departmentId: selectedDeptId.value,
-      searchKey: searchKey.value || undefined,
-      page: pageIndex.value,
-      row: pageSize.value,
-    }, signal),
+    wxWorkApi.fetchOrgUserList(
+      {
+        departmentId: selectedDeptId.value,
+        searchKey: searchKey.value || undefined,
+        page: pageIndex.value,
+        row: pageSize.value,
+      },
+      signal,
+    ),
   placeholderData: keepPreviousData,
   enabled: () => !!selectedDeptId.value,
 })
@@ -98,30 +105,32 @@ async function handleRefresh() {
 </script>
 
 <template>
-  <div class="flex gap-4">
+  <div class="flex gap-4 h-full">
     <!-- 左侧部门树 -->
-    <div class="w-60 shrink-0 rounded bg-white shadow-sm p-4">
-      <div class="flex items-center gap-2 mb-3">
+    <div class="w-60 h-full shrink-0 rounded bg-white shadow-sm p-4 flex flex-col min-h-0">
+      <div class="flex items-center gap-2 mb-3 shrink-0">
         <IconEpList class="text-lg text-primary" />
         <span class="text-sm font-semibold text-text-primary">组织架构</span>
       </div>
-      <el-tree
-        v-if="deptReady && deptTree?.length"
-        :data="deptTree"
-        :props="{ children: 'children', label: 'name' }"
-        node-key="id"
-        :default-expanded-keys="treeDefaultExpandedKeys"
-        highlight-current
-        @node-click="handleNodeClick"
-      />
-      <el-skeleton v-else-if="deptLoading" :rows="6" animated />
-      <span v-else class="text-sm text-text-placeholder">暂无部门数据</span>
+      <div class="flex-1 min-h-0 overflow-y-auto">
+        <el-tree
+          v-if="deptReady && deptTree?.length"
+          :data="deptTree"
+          :props="{ children: 'children', label: 'name' }"
+          node-key="id"
+          :default-expanded-keys="treeDefaultExpandedKeys"
+          highlight-current
+          @node-click="handleNodeClick"
+        />
+        <el-skeleton v-else-if="deptLoading" :rows="6" animated />
+        <span v-else class="text-sm text-text-placeholder">暂无部门数据</span>
+      </div>
     </div>
 
     <!-- 右侧成员列表 -->
-    <div class="flex-1 rounded bg-white shadow-sm p-4 min-w-0">
+    <div class="flex-1 rounded bg-white shadow-sm p-4 min-w-0 flex flex-col min-h-0">
       <!-- 操作栏 -->
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center justify-between mb-4 shrink-0">
         <div class="flex items-center">
           <el-input
             v-model="searchKey"
@@ -146,22 +155,24 @@ async function handleRefresh() {
       </div>
 
       <!-- 表格 -->
-      <ProTable
-        v-model:current-page="pageIndex"
-        v-model:page-size="pageSize"
-        :columns="columns"
-        :data="tableData"
-        :loading="userLoading"
-        :total="total"
-        paginated
-      >
-        <template #department="{ row }">
-          {{ row.department[0]?.name }}
-        </template>
-        <template #gender="{ row }">
-          {{ row.genderText }}
-        </template>
-      </ProTable>
+      <div class="flex-1 min-h-0 overflow-y-auto">
+        <ProTable
+          v-model:current-page="pageIndex"
+          v-model:page-size="pageSize"
+          :columns="columns"
+          :data="tableData"
+          :loading="userLoading"
+          :total="total"
+          paginated
+        >
+          <template #department="{ row }">
+            {{ row.department[0]?.name }}
+          </template>
+          <template #gender="{ row }">
+            {{ row.genderText }}
+          </template>
+        </ProTable>
+      </div>
     </div>
   </div>
 </template>

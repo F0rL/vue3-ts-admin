@@ -15,7 +15,7 @@
       <main class="flex-1 overflow-auto p-4">
         <router-view v-slot="{ Component, route: r }">
           <transition name="fade-slide" mode="out-in">
-            <div :key="r.fullPath">
+            <div :key="r.fullPath" class="h-full">
               <component :is="Component" />
             </div>
           </transition>
