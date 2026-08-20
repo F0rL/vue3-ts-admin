@@ -13,8 +13,12 @@ const pageSize = ref(10)
 
 const dateRange = ref<[string, string] | null>(null)
 
-const { data: listRes, isFetching: loading } = useQuery({
-  queryKey: [...logKeys.lists(), pageIndex, pageSize, searchKey, dateRange],
+const {
+  data: listRes,
+  isFetching: loading,
+  refetch,
+} = useQuery({
+  queryKey: [...logKeys.lists(), pageIndex, pageSize],
   queryFn: ({ signal }) =>
     sysLogApi.fetchLogList(
       {
@@ -47,14 +51,16 @@ const disabledDate = (date: Date) => date.getTime() > Date.now()
 
 /** 查询 */
 function handleSearch() {
-  pageIndex.value = 1
+  if (pageIndex.value === 1) refetch()
+  else pageIndex.value = 1
 }
 
 /** 重置 */
 function handleReset() {
   searchKey.value = ''
   dateRange.value = null
-  pageIndex.value = 1
+  if (pageIndex.value === 1) refetch()
+  else pageIndex.value = 1
 }
 </script>
 

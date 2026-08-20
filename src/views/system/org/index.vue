@@ -28,8 +28,8 @@ const {
 // 默认选中第一个部门后加载用户列表
 const selectedDeptId = computed(() => currentDeptId.value || '')
 
-const { data: userListData, isFetching: userLoading } = useQuery({
-  queryKey: [...orgKeys.users(), selectedDeptId, searchKey, pageIndex, pageSize],
+const { data: userListData, isFetching: userLoading, refetch } = useQuery({
+  queryKey: [...orgKeys.users(), selectedDeptId, pageIndex, pageSize],
   queryFn: ({ signal }) =>
     wxWorkApi.fetchOrgUserList({
       departmentId: selectedDeptId.value,
@@ -77,13 +77,15 @@ watch(deptTree, handleDeptTreeReady, { immediate: true })
 
 /** 搜索 */
 function handleSearch() {
-  pageIndex.value = 1
+  if (pageIndex.value === 1) refetch()
+  else pageIndex.value = 1
 }
 
 /** 重置 */
 function handleReset() {
   searchKey.value = ''
-  pageIndex.value = 1
+  if (pageIndex.value === 1) refetch()
+  else pageIndex.value = 1
 }
 
 /** 刷新缓存 */

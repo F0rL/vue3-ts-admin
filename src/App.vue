@@ -1,10 +1,13 @@
 <template>
-  <router-view />
-  <VueQueryDevtools v-if="showDevtools" />
+  <el-config-provider :locale="zhCn">
+    <router-view />
+    <VueQueryDevtools v-if="showDevtools" />
+  </el-config-provider>
 </template>
 
 <script setup lang="ts">
 import { defineAsyncComponent } from 'vue'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 
 const showDevtools = import.meta.env.VITE_APP_ENABLE_DEVTOOLS === 'true'
 
